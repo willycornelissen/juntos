@@ -9,6 +9,7 @@ import {
   type Turma,
   validateTurmaMetadata,
 } from '../domain/types';
+import { sortTurmas } from '../domain/turmaSort';
 import { mapAuthErrorToPtBr } from '../services/authService';
 
 export async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
@@ -158,8 +159,10 @@ export function TurmasDashboard({
   const [formError, setFormError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const turmasAtivas = turmas.filter((t) => t.status === 'Ativa');
-  const turmasEncerradas = turmas.filter((t) => t.status === 'Encerrada');
+  const turmasAtivas = sortTurmas(turmas.filter((t) => t.status === 'Ativa'));
+  const turmasEncerradas = sortTurmas(
+    turmas.filter((t) => t.status === 'Encerrada')
+  );
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { normalizeStudentKey } from '../domain/chamadaParser';
 import { formatDatePtBr } from '../domain/syncEngine';
+import { sortTurmas } from '../domain/turmaSort';
 import {
   type AlunoRecord,
   type CommentEntry,
@@ -141,18 +142,18 @@ export async function listTurmas(uid: string): Promise<Turma[]> {
     const turmasRef = collection(db, 'users', uid, 'turmas');
     const snap = await getDocs(turmasRef);
     const items = snap.docs.map((d) => d.data() as Turma);
-    return items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return sortTurmas(items);
   }
 
   const store = readUserStore(uid);
-  return Object.values(store.turmas)
-    .map((b) => ({
+  return sortTurmas(
+    Object.values(store.turmas).map((b) => ({
       ...b.turma,
       lessons: [...b.turma.lessons],
       comentarios: [...b.turma.comentarios],
       catedras: [...b.turma.catedras],
     }))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  );
 }
 
 export async function getTurmaWithAlunos(

@@ -295,4 +295,50 @@ describe('components/LoginView & TurmasDashboard', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Erro ao deletar turma.');
     });
   });
+
+  it('renders turmas ordered by day of the week, and alphabetically by name on the same day', () => {
+    const turmaZQua: Turma = {
+      ...sampleActiveTurma,
+      id: 'z-qua',
+      nome: 'Turma Z (QUA)',
+      diaHorario: 'Quarta-feira, 19h30',
+    };
+    const turmaAQua: Turma = {
+      ...sampleActiveTurma,
+      id: 'a-qua',
+      nome: 'Turma A (QUA)',
+      diaHorario: 'Quarta-feira, 19h30',
+    };
+    const turmaBSeg: Turma = {
+      ...sampleActiveTurma,
+      id: 'b-seg',
+      nome: 'Turma B (SEG)',
+      diaHorario: 'Segunda-feira, 19h00',
+    };
+    const turmaCSex: Turma = {
+      ...sampleActiveTurma,
+      id: 'c-sex',
+      nome: 'Turma C (SEX)',
+      diaHorario: 'Sexta-feira, 20h00',
+    };
+
+    render(
+      <TurmasDashboard
+        turmas={[turmaZQua, turmaCSex, turmaAQua, turmaBSeg]}
+        onSelectTurma={vi.fn()}
+        onCreateTurma={vi.fn()}
+      />
+    );
+
+    const cardTitles = screen
+      .getAllByRole('heading', { level: 2 })
+      .map((h) => h.textContent);
+
+    expect(cardTitles).toEqual([
+      'Turma B (SEG)',
+      'Turma A (QUA)',
+      'Turma Z (QUA)',
+      'Turma C (SEX)',
+    ]);
+  });
 });
