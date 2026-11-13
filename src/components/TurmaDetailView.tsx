@@ -30,6 +30,7 @@ export interface TurmaDetailViewProps {
     closingComment?: string
   ) => Promise<void>;
   onAddTurmaComment: (text: string) => Promise<void>;
+  onDeleteTurma?: () => Promise<void>;
 }
 
 export function TurmaDetailView({
@@ -41,6 +42,7 @@ export function TurmaDetailView({
   onUpdateMetadata,
   onChangeStatus,
   onAddTurmaComment,
+  onDeleteTurma,
 }: TurmaDetailViewProps): React.ReactElement {
   // Inline metadata edit state
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
@@ -55,6 +57,11 @@ export function TurmaDetailView({
   const [showCloseForm, setShowCloseForm] = useState(false);
   const [closingComment, setClosingComment] = useState('');
   const [changingStatus, setChangingStatus] = useState(false);
+
+  // Excluir turma state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingTurma, setDeletingTurma] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // View tab state (Matriz vs Relatório)
   const [activeTab, setActiveTab] = useState<TurmaDetailTab>('matriz');
@@ -162,6 +169,22 @@ export function TurmaDetailView({
     }
   };
 
+  const handleConfirmDelete = async () => {
+    if (!onDeleteTurma || deletingTurma) {
+      return;
+    }
+    setDeletingTurma(true);
+    setDeleteError(null);
+    try {
+      await onDeleteTurma();
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : 'Erro ao excluir turma.'
+      );
+      setDeletingTurma(false);
+    }
+  };
+
   const filteredAlunos = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return alunos.filter((aluno) => {
@@ -238,11 +261,25 @@ export function TurmaDetailView({
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => void handleReopenTurma()}
-                disabled={changingStatus}
+                disabled={changingStatus || deletingTurma}
               >
                 Reabrir turma
               </button>
             </>
+          )}
+
+          {onDeleteTurma && (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => {
+                setDeleteError(null);
+                setShowDeleteConfirm(true);
+              }}
+              disabled={changingStatus || deletingTurma}
+            >
+              Excluir turma
+            </button>
           )}
         </div>
       </div>
@@ -752,6 +789,69 @@ export function TurmaDetailView({
           </button>
         </form>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="modal-backdrop" role="presentation">
+          <div
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-turma-dialog-title"
+            style={{ maxWidth: '500px' }}
+          >
+            <h3
+              id="delete-turma-dialog-title"
+              className="card-title"
+              style={{ color: 'var(--danger)' }}
+            >
+              Excluir Turma Permanentemente?
+            </h3>
+            <p
+              className="card-meta"
+              style={{ marginTop: '0.65rem', lineHeight: '1.5' }}
+            >
+              Tem certeza que deseja excluir permanentemente a turma{' '}
+              <strong>{turma.nome}</strong>? Esta ação é irreversível e apagará
+              todas as aulas registradas, histórico de presenças e fichas de alunos.
+            </p>
+
+            {deleteError && (
+              <div className="warning" role="alert" style={{ marginTop: '1rem' }}>
+                {deleteError}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '0.75rem',
+                marginTop: '1.75rem',
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteError(null);
+                }}
+                disabled={deletingTurma}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => void handleConfirmDelete()}
+                disabled={deletingTurma}
+              >
+                {deletingTurma ? 'Excluindo turma...' : 'Confirmar Exclusão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

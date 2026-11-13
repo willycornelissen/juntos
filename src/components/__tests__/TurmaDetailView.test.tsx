@@ -424,4 +424,77 @@ describe('components/TurmaDetailView', () => {
       screen.getByRole('region', { name: /Conclusão vs. Evasão/i })
     ).toBeInTheDocument();
   });
+
+  it('opens confirmation modal and executes onDeleteTurma on confirm (EXCLUIR-02)', async () => {
+    const onDeleteTurma = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <TurmaDetailView
+        turma={sampleTurma}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+        onDeleteTurma={onDeleteTurma}
+      />
+    );
+
+    const deleteBtn = screen.getByRole('button', { name: /excluir turma/i });
+    expect(deleteBtn).toBeInTheDocument();
+
+    // Click to open confirmation modal
+    fireEvent.click(deleteBtn);
+
+    expect(
+      screen.getByRole('heading', { name: /excluir turma permanentemente\?/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/esta ação é irreversível e apagará todas as aulas/i)
+    ).toBeInTheDocument();
+
+    // Test cancel
+    const cancelBtn = screen.getByRole('button', { name: /cancelar/i });
+    fireEvent.click(cancelBtn);
+    expect(
+      screen.queryByRole('heading', { name: /excluir turma permanentemente\?/i })
+    ).not.toBeInTheDocument();
+    expect(onDeleteTurma).not.toHaveBeenCalled();
+
+    // Reopen and confirm
+    fireEvent.click(deleteBtn);
+    const confirmBtn = screen.getByRole('button', { name: /confirmar exclusão/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(onDeleteTurma).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('displays error message when onDeleteTurma throws an error (EXCLUIR-02)', async () => {
+    const onDeleteTurma = vi.fn().mockRejectedValue(new Error('Falha no banco ao excluir.'));
+
+    render(
+      <TurmaDetailView
+        turma={sampleTurma}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+        onDeleteTurma={onDeleteTurma}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /excluir turma/i }));
+    fireEvent.click(screen.getByRole('button', { name: /confirmar exclusão/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Falha no banco ao excluir.');
+    });
+  });
 });

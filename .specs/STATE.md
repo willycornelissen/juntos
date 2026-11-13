@@ -29,10 +29,10 @@
 ## Handoff
 
 - **Feature**: excluir-turma (`.specs/features/excluir-turma`)
-- **Phase / Task**: Execute — T2
-- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1
-- **In-progress** (file:line): `src/components/TurmaDetailView.tsx`
-- **Next step**: Implement T2 (button and confirmation dialog in `TurmaDetailView.tsx`)
+- **Phase / Task**: Execute — T3
+- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2
+- **In-progress** (file:line): `src/components/TurmasDashboard.tsx`
+- **Next step**: Implement T3 (add delete option on dashboard cards with confirmation)
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: main
