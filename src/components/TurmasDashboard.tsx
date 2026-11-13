@@ -66,7 +66,11 @@ export function LoginView({ onSignIn }: LoginViewProps): React.ReactElement {
             className="login-logo"
           />
         </div>
-        <p className="subtitle">
+        <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+          <span className="login-tagline-badge">Nova Acrópole</span>
+          <h1>Juntos.</h1>
+        </div>
+        <p className="subtitle" style={{ textAlign: 'center' }}>
           Acompanhamento de turmas, chamadas e fichas particulares de alunos.
         </p>
 

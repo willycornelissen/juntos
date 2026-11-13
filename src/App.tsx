@@ -319,15 +319,27 @@ export function App(): React.ReactElement {
       <header className="hero">
         <div className="hero-inner">
           <div className="hero-brand">
-            <h1>Juntos.</h1>
-            <p>Gestão de turmas, chamadas e acompanhamento de alunos</p>
+            <div className="hero-brand-header">
+              <img
+                src={`${import.meta.env.BASE_URL}nova-acropole-logo-white.png`}
+                alt="Nova Acrópole"
+                className="hero-logo"
+              />
+              <span className="hero-divider" aria-hidden="true" />
+              <div className="hero-brand-titles">
+                <h1>
+                  Juntos<span className="hero-brand-dot">.</span>
+                </h1>
+                <p>Gestão de turmas, chamadas e acompanhamento de alunos</p>
+              </div>
+            </div>
           </div>
           <div className="hero-user">
-            <span>{user.email}</span>
+            <span className="user-email-chip">{user.email}</span>
             {canAddTeachers(user) && (
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary btn-header"
                 onClick={() => setIsAddUserOpen(true)}
               >
                 Gerenciar Professores
@@ -335,7 +347,7 @@ export function App(): React.ReactElement {
             )}
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary btn-header"
               onClick={() => void handleSignOut()}
             >
               Sair
@@ -440,6 +452,24 @@ export function App(): React.ReactElement {
           />
         )}
       </main>
+
+      <footer className="site-footer">
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <img
+              src={`${import.meta.env.BASE_URL}nova-acropole-logo-teal.png`}
+              alt="Nova Acrópole"
+              className="footer-logo"
+            />
+            <p className="footer-tagline">
+              Organização Internacional Nova Acrópole — Filosofia • Cultura • Voluntariado
+            </p>
+          </div>
+          <p className="footer-copy">
+            Juntos &copy; {new Date().getFullYear()} — Plataforma de Gestão de Turmas e Chamadas
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
