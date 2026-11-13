@@ -12,6 +12,7 @@ export interface LessonColumn {
   course: string;        // From Row 2 (e.g. "Filosofia para viver")
   theme: string;         // From Row 3 (e.g. "Transpasso Aula 10")
   instructor: string;    // From Row 4 (e.g. "Willy Garabini Cornelissen")
+  comentario?: string;   // Optional comment/annotation for this specific lesson
 }
 
 export interface CommentEntry {

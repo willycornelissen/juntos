@@ -91,6 +91,7 @@ export function computeReimportPlan(
           incomingLesson.instructor.trim() !== ''
             ? incomingLesson.instructor
             : existingLesson.instructor,
+        comentario: existingLesson.comentario,
       };
       mergedLessonsMap.set(existingLesson.dateKey, mergedLesson);
 

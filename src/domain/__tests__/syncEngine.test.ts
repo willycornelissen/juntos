@@ -409,4 +409,45 @@ describe('domain/syncEngine', () => {
     expect(plan.updatedStudents).toHaveLength(1);
     expect(plan.updatedStudents[0].presencas['14/10/26']).toBe('A');
   });
+
+  it('preserves existing lesson comments across spreadsheet reimport (AULA-01)', () => {
+    const turma = makeBaseTurma();
+    turma.lessons = [
+      {
+        dateKey: '14/10/26',
+        isoDate: '2026-10-14',
+        course: 'Filosofia para viver',
+        theme: 'Transpasso Aula 10',
+        instructor: 'Willy Garabini Cornelissen',
+        comentario: 'Aula especial com debate em grupo.',
+      },
+    ];
+
+    const parsed: ParsedChamada = {
+      cidadePlanilha: 'Belo Horizonte',
+      nomeTurmaPlanilha: 'Turma Pampulha (QUA)',
+      lessons: [
+        {
+          dateKey: '14/10/26',
+          isoDate: '2026-10-14',
+          course: 'Filosofia para viver',
+          theme: 'Transpasso Aula 10 - Atualizado',
+          instructor: 'Willy Garabini Cornelissen',
+        },
+      ],
+      students: [],
+    };
+
+    const plan = computeReimportPlan(
+      turma,
+      [],
+      parsed,
+      '2026-10-15T10:00:00.000Z'
+    );
+
+    const merged = plan.updatedLessons.find((l) => l.dateKey === '14/10/26');
+    expect(merged).toBeDefined();
+    expect(merged?.theme).toBe('Transpasso Aula 10 - Atualizado');
+    expect(merged?.comentario).toBe('Aula especial com debate em grupo.');
+  });
 });

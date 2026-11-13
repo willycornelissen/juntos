@@ -36,11 +36,11 @@
 
 ## Handoff
 
-- **Feature**: excluir-turma (`.specs/features/excluir-turma`)
-- **Phase / Task**: Done (All 4 tasks completed and independently verified with PASS)
-- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2, T3, T4, Verification (`validation.md`)
-- **In-progress** (file:line): none
-- **Next step**: Ready for user review
+- **Feature**: comentario-aula (`.specs/features/comentario-aula`)
+- **Phase / Task**: Execute — T2
+- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1
+- **In-progress** (file:line): `src/services/turmaRepo.ts`
+- **Next step**: Implement T2 (saveLessonComment in turmaRepo.ts)
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: main
