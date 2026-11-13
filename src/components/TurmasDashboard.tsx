@@ -129,6 +129,7 @@ export interface TurmasDashboardProps {
     parsed: ParsedChamada
   ) => Promise<void>;
   onLoadSampleTurma?: () => Promise<void>;
+  onDeleteTurma?: (turmaId: string) => Promise<void>;
 }
 
 export function TurmasDashboard({
@@ -136,8 +137,14 @@ export function TurmasDashboard({
   onSelectTurma,
   onCreateTurma,
   onLoadSampleTurma,
+  onDeleteTurma,
 }: TurmasDashboardProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<DashboardTab>('ativas');
+
+  // Deletar turma state
+  const [turmaToDelete, setTurmaToDelete] = useState<Turma | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [dashboardDeleteError, setDashboardDeleteError] = useState<string | null>(null);
 
   // + Nova Turma form state
   const [nome, setNome] = useState('');
@@ -446,7 +453,17 @@ export function TurmasDashboard({
                 ))}
               </div>
 
-              <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+              <div
+                style={{
+                  marginTop: 'auto',
+                  paddingTop: '0.6rem',
+                  display: 'flex',
+                  gap: '0.6rem',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                }}
+              >
                 <button
                   type="button"
                   className="btn"
@@ -454,9 +471,105 @@ export function TurmasDashboard({
                 >
                   Abrir turma
                 </button>
+                {onDeleteTurma && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{
+                      color: 'var(--danger)',
+                      borderColor: 'var(--border)',
+                      fontSize: '0.85rem',
+                      padding: '0.45rem 0.85rem',
+                    }}
+                    onClick={() => {
+                      setDashboardDeleteError(null);
+                      setTurmaToDelete(turma);
+                    }}
+                    aria-label={`Excluir turma ${turma.nome}`}
+                  >
+                    Excluir
+                  </button>
+                )}
               </div>
             </article>
           ))}
+        </div>
+      )}
+
+      {turmaToDelete && (
+        <div className="modal-backdrop" role="presentation">
+          <div
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-delete-title"
+            style={{ maxWidth: '500px' }}
+          >
+            <h3
+              id="dashboard-delete-title"
+              className="card-title"
+              style={{ color: 'var(--danger)' }}
+            >
+              Excluir Turma Permanentemente?
+            </h3>
+            <p
+              className="card-meta"
+              style={{ marginTop: '0.65rem', lineHeight: '1.5' }}
+            >
+              Tem certeza que deseja excluir permanentemente a turma{' '}
+              <strong>{turmaToDelete.nome}</strong>? Esta ação é irreversível e
+              apagará todas as aulas registradas, histórico de presenças e fichas de alunos.
+            </p>
+
+            {dashboardDeleteError && (
+              <div className="warning" role="alert" style={{ marginTop: '1rem' }}>
+                {dashboardDeleteError}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '0.75rem',
+                marginTop: '1.75rem',
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setTurmaToDelete(null);
+                  setDashboardDeleteError(null);
+                }}
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={async () => {
+                  if (!onDeleteTurma || deleting) return;
+                  setDeleting(true);
+                  setDashboardDeleteError(null);
+                  try {
+                    await onDeleteTurma(turmaToDelete.id);
+                    setTurmaToDelete(null);
+                  } catch (err) {
+                    setDashboardDeleteError(
+                      err instanceof Error ? err.message : 'Erro ao excluir turma.'
+                    );
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                disabled={deleting}
+              >
+                {deleting ? 'Excluindo...' : 'Confirmar Exclusão'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>

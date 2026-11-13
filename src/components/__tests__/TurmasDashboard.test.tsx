@@ -232,4 +232,67 @@ describe('components/LoginView & TurmasDashboard', () => {
     );
     expect(onCreateTurma).not.toHaveBeenCalled();
   });
+
+  it('opens confirmation modal and executes onDeleteTurma from dashboard card (EXCLUIR-03)', async () => {
+    const onDeleteTurma = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <TurmasDashboard
+        turmas={[sampleActiveTurma]}
+        onSelectTurma={vi.fn()}
+        onCreateTurma={vi.fn()}
+        onDeleteTurma={onDeleteTurma}
+      />
+    );
+
+    const deleteBtn = screen.getByRole('button', {
+      name: `Excluir turma ${sampleActiveTurma.nome}`,
+    });
+    expect(deleteBtn).toBeInTheDocument();
+
+    fireEvent.click(deleteBtn);
+
+    expect(
+      screen.getByRole('heading', { name: /excluir turma permanentemente\?/i })
+    ).toBeInTheDocument();
+
+    // Cancel
+    fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
+    expect(
+      screen.queryByRole('heading', { name: /excluir turma permanentemente\?/i })
+    ).not.toBeInTheDocument();
+    expect(onDeleteTurma).not.toHaveBeenCalled();
+
+    // Reopen and confirm
+    fireEvent.click(deleteBtn);
+    fireEvent.click(screen.getByRole('button', { name: /confirmar exclusão/i }));
+
+    await waitFor(() => {
+      expect(onDeleteTurma).toHaveBeenCalledWith(sampleActiveTurma.id);
+    });
+  });
+
+  it('displays error in dashboard delete modal when deletion fails (EXCLUIR-03)', async () => {
+    const onDeleteTurma = vi.fn().mockRejectedValue(new Error('Erro ao deletar turma.'));
+
+    render(
+      <TurmasDashboard
+        turmas={[sampleActiveTurma]}
+        onSelectTurma={vi.fn()}
+        onCreateTurma={vi.fn()}
+        onDeleteTurma={onDeleteTurma}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: `Excluir turma ${sampleActiveTurma.nome}`,
+      })
+    );
+    fireEvent.click(screen.getByRole('button', { name: /confirmar exclusão/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Erro ao deletar turma.');
+    });
+  });
 });
