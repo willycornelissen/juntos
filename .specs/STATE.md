@@ -37,10 +37,10 @@
 ## Handoff
 
 - **Feature**: comentario-aula (`.specs/features/comentario-aula`)
-- **Phase / Task**: Execute — T4 Complete (Ready for Verification)
-- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2, T3, T4
+- **Phase / Task**: Execute — Verification Complete (PASS)
+- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2, T3, T4, Verification (`validation.md`)
 - **In-progress** (file:line): none
-- **Next step**: Run validation and build gates
+- **Next step**: Final review and delivery
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: main
