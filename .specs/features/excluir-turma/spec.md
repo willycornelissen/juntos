@@ -48,4 +48,4 @@ Como professor, quero poder excluir turmas indesejadas diretamente a partir dos 
 | --- | --- | --- | --- |
 | EXCLUIR-01 | US-01 | Função de exclusão atômica no repositório `turmaRepo` (local e Firestore) | verified |
 | EXCLUIR-02 | US-02 | Botão e modal de confirmação de exclusão em `TurmaDetailView` | verified |
-| EXCLUIR-03 | US-03 | Integração da exclusão em `App.tsx` e opção no painel `TurmasDashboard` | in-progress |
+| EXCLUIR-03 | US-03 | Integração da exclusão em `App.tsx` e opção no painel `TurmasDashboard` | verified |

@@ -21,6 +21,7 @@ import {
   addTurmaComment,
   applyReimportPlan,
   createTurmaFromImport,
+  deleteTurma,
   getLocalDataForMigration,
   getTurmaWithAlunos,
   inactivateAluno,
@@ -305,6 +306,24 @@ export function App(): React.ReactElement {
     await refreshTurmas(user.uid);
   };
 
+  const handleDeleteTurma = async (turmaId?: string) => {
+    if (!user) {
+      return;
+    }
+    const targetTurmaId = turmaId ?? selectedTurmaId;
+    if (!targetTurmaId) {
+      return;
+    }
+    await deleteTurma(user.uid, targetTurmaId);
+    if (selectedTurmaId === targetTurmaId) {
+      setSelectedTurmaId(null);
+      setActiveTurma(null);
+      setActiveAlunos([]);
+      setSelectedStudentKey(null);
+    }
+    await refreshTurmas(user.uid);
+  };
+
   if (!user) {
     return <LoginView onSignIn={handleSignIn} />;
   }
@@ -416,6 +435,7 @@ export function App(): React.ReactElement {
             onUpdateMetadata={handleUpdateMetadata}
             onChangeStatus={handleChangeStatus}
             onAddTurmaComment={handleAddTurmaComment}
+            onDeleteTurma={handleDeleteTurma}
           />
         ) : (
           <TurmasDashboard
@@ -423,6 +443,7 @@ export function App(): React.ReactElement {
             onSelectTurma={(id) => void handleSelectTurma(id)}
             onCreateTurma={handleCreateTurma}
             onLoadSampleTurma={handleLoadSampleTurma}
+            onDeleteTurma={(id) => handleDeleteTurma(id)}
           />
         )}
 
