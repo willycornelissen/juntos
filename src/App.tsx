@@ -27,6 +27,7 @@ import {
   inactivateAluno,
   listTurmas,
   migrateLocalDataToFirestore,
+  saveLessonComment,
   setTurmaStatus,
   updateTurmaMetadata,
   type MigrationSummary,
@@ -324,6 +325,23 @@ export function App(): React.ReactElement {
     await refreshTurmas(user.uid);
   };
 
+  const handleSaveLessonComment = async (
+    dateKey: string,
+    text: string | null
+  ) => {
+    if (!user || !selectedTurmaId) {
+      return;
+    }
+    const updated = await saveLessonComment(
+      user.uid,
+      selectedTurmaId,
+      dateKey,
+      text
+    );
+    setActiveTurma(updated);
+    await refreshTurmas(user.uid);
+  };
+
   if (!user) {
     return <LoginView onSignIn={handleSignIn} />;
   }
@@ -436,6 +454,7 @@ export function App(): React.ReactElement {
             onChangeStatus={handleChangeStatus}
             onAddTurmaComment={handleAddTurmaComment}
             onDeleteTurma={handleDeleteTurma}
+            onSaveLessonComment={handleSaveLessonComment}
           />
         ) : (
           <TurmasDashboard

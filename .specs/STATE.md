@@ -37,10 +37,10 @@
 ## Handoff
 
 - **Feature**: comentario-aula (`.specs/features/comentario-aula`)
-- **Phase / Task**: Execute — T4
-- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2, T3
-- **In-progress** (file:line): `src/App.tsx`
-- **Next step**: Implement T4 (handleSaveLessonComment in App.tsx)
+- **Phase / Task**: Execute — T4 Complete (Ready for Verification)
+- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2, T3, T4
+- **In-progress** (file:line): none
+- **Next step**: Run validation and build gates
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: main
