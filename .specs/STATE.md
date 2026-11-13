@@ -37,10 +37,10 @@
 ## Handoff
 
 - **Feature**: comentario-aula (`.specs/features/comentario-aula`)
-- **Phase / Task**: Execute — T2
-- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1
-- **In-progress** (file:line): `src/services/turmaRepo.ts`
-- **Next step**: Implement T2 (saveLessonComment in turmaRepo.ts)
+- **Phase / Task**: Execute — T3
+- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2
+- **In-progress** (file:line): `src/components/TurmaDetailView.tsx`
+- **Next step**: Implement T3 (lesson details dialog and comment icon in TurmaDetailView.tsx)
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: main

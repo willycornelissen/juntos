@@ -12,6 +12,7 @@ import {
   listTurmas,
   migrateLocalDataToFirestore,
   resetLocalStoreForTests,
+  saveLessonComment,
   setTurmaStatus,
   updateTurmaMetadata,
 } from '../turmaRepo';
@@ -517,5 +518,93 @@ describe('services/turmaRepo', () => {
     await expect(
       deleteTurma('uid-prof-delete', 'turma-inexistente-123')
     ).rejects.toThrow('Turma não encontrada.');
+  });
+
+  it('saves, updates, and removes a lesson comment (AULA-02)', async () => {
+    const parsed = makeSampleParsedChamada();
+    const { turma } = await createTurmaFromImport(
+      'uid-prof-lesson',
+      {
+        nome: 'Turma Comentário Aula',
+        diaHorario: 'Quarta-feira, 19h30',
+        local: 'Belo Horizonte',
+        catedras: ['Filosofia para Viver'],
+      },
+      parsed
+    );
+
+    // Save new comment
+    const updatedWithComment = await saveLessonComment(
+      'uid-prof-lesson',
+      turma.id,
+      '07/10/26',
+      'Aula de introdução prática com presença total.'
+    );
+    const lessonWithComment = updatedWithComment.lessons.find(
+      (l) => l.dateKey === '07/10/26'
+    );
+    expect(lessonWithComment?.comentario).toBe(
+      'Aula de introdução prática com presença total.'
+    );
+
+    // Verify persistence
+    const reloaded = await getTurmaWithAlunos('uid-prof-lesson', turma.id);
+    expect(
+      reloaded.turma.lessons.find((l) => l.dateKey === '07/10/26')?.comentario
+    ).toBe('Aula de introdução prática com presença total.');
+
+    // Remove comment by passing null
+    const updatedWithoutComment = await saveLessonComment(
+      'uid-prof-lesson',
+      turma.id,
+      '07/10/26',
+      null
+    );
+    expect(
+      updatedWithoutComment.lessons.find((l) => l.dateKey === '07/10/26')
+        ?.comentario
+    ).toBeUndefined();
+
+    // Re-verify persistence after removal
+    const reloadedAfterRemoval = await getTurmaWithAlunos(
+      'uid-prof-lesson',
+      turma.id
+    );
+    expect(
+      reloadedAfterRemoval.turma.lessons.find((l) => l.dateKey === '07/10/26')
+        ?.comentario
+    ).toBeUndefined();
+  });
+
+  it('throws error when saving lesson comment for invalid turma or lesson date', async () => {
+    await expect(
+      saveLessonComment(
+        'uid-prof-lesson',
+        'inexistente',
+        '07/10/26',
+        'Texto'
+      )
+    ).rejects.toThrow('Turma não encontrada.');
+
+    const parsed = makeSampleParsedChamada();
+    const { turma } = await createTurmaFromImport(
+      'uid-prof-lesson',
+      {
+        nome: 'Turma Comentário Invalido',
+        diaHorario: 'Quarta-feira, 19h30',
+        local: 'Belo Horizonte',
+        catedras: ['Filosofia para Viver'],
+      },
+      parsed
+    );
+
+    await expect(
+      saveLessonComment(
+        'uid-prof-lesson',
+        turma.id,
+        '99/99/99',
+        'Texto'
+      )
+    ).rejects.toThrow('Aula não encontrada para a data informada.');
   });
 });

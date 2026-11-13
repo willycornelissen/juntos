@@ -494,6 +494,54 @@ export async function addTurmaComment(
   return entry;
 }
 
+export async function saveLessonComment(
+  uid: string,
+  turmaId: string,
+  dateKey: string,
+  text: string | null,
+  nowIso = new Date().toISOString()
+): Promise<Turma> {
+  const { turma: existingTurma } = await getTurmaWithAlunos(uid, turmaId);
+  const lessonIndex = existingTurma.lessons.findIndex(
+    (l) => l.dateKey === dateKey
+  );
+  if (lessonIndex === -1) {
+    throw new Error('Aula não encontrada para a data informada.');
+  }
+
+  const trimmedText = text && text.trim().length > 0 ? text.trim() : null;
+
+  const updatedLessons = existingTurma.lessons.map((lesson) => {
+    if (lesson.dateKey !== dateKey) {
+      return lesson;
+    }
+    const copy: LessonColumn = { ...lesson };
+    if (trimmedText) {
+      copy.comentario = trimmedText;
+    } else {
+      delete copy.comentario;
+    }
+    return copy;
+  });
+
+  const updatedTurma: Turma = {
+    ...existingTurma,
+    lessons: updatedLessons,
+    updatedAt: nowIso,
+  };
+
+  const db = getFirestoreDb();
+  if (db) {
+    await setDoc(doc(db, 'users', uid, 'turmas', turmaId), updatedTurma);
+    return updatedTurma;
+  }
+
+  const store = readUserStore(uid);
+  store.turmas[turmaId].turma = updatedTurma;
+  writeUserStore(uid, store);
+  return updatedTurma;
+}
+
 export async function addAlunoComment(
   uid: string,
   turmaId: string,
