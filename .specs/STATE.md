@@ -26,13 +26,21 @@
 - **Date**: 2026-10-22
 - **Status**: active
 
+### AD-004
+- **Decision**: Execute class deletion as an irreversible cascade deletion: in Firestore mode, batch-delete the class document and all student documents in its `alunos` subcollection simultaneously; in local mode, remove the class and students from `userStore`. Require explicit client-side safety confirmation modals before triggering.
+- **Reason**: Firestore does not automatically delete subcollections when a parent document is deleted. Batch-deleting avoids orphaned student documents, preserves data integrity, and explicit confirmation modals prevent accidental data loss without adding the complexity of a soft-delete/trash bin architecture.
+- **Trade-off**: Permanent deletion is immediate and non-recoverable once confirmed.
+- **Scope**: Repository layer (`src/services/turmaRepo.ts`), detail view (`src/components/TurmaDetailView.tsx`), dashboard (`src/components/TurmasDashboard.tsx`), and `src/App.tsx`.
+- **Date**: 2026-11-13
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: excluir-turma (`.specs/features/excluir-turma`)
-- **Phase / Task**: Execute — T4 Complete (Ready for Verification)
-- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2, T3, T4
+- **Phase / Task**: Done (All 4 tasks completed and independently verified with PASS)
+- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1, T2, T3, T4, Verification (`validation.md`)
 - **In-progress** (file:line): none
-- **Next step**: Run validation and build gates
+- **Next step**: Ready for user review
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: main
