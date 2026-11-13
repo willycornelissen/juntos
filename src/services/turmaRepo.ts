@@ -14,6 +14,7 @@ import {
   type AlunoRecord,
   type CommentEntry,
   type CreateTurmaInput,
+  type LessonColumn,
   type ParsedChamada,
   type ReimportPlan,
   type Turma,
