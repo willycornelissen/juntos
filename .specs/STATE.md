@@ -28,11 +28,11 @@
 
 ## Handoff
 
-- **Feature**: relatorio-encerramento (`.specs/features/relatorio-encerramento`)
-- **Phase / Task**: Execute — Verified (`validation.md` PASS, all 3 tasks T1-T3 complete)
-- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), Execute (`T1`..`T3`), Verifier report (`validation.md`)
-- **In-progress** (file:line): none
-- **Next step**: User acceptance testing
+- **Feature**: excluir-turma (`.specs/features/excluir-turma`)
+- **Phase / Task**: Execute — T2
+- **Completed**: Specify (`spec.md`), Tasks (`tasks.md`), T1
+- **In-progress** (file:line): `src/components/TurmaDetailView.tsx`
+- **Next step**: Implement T2 (button and confirmation dialog in `TurmaDetailView.tsx`)
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: main

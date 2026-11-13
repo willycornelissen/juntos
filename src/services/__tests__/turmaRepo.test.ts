@@ -5,6 +5,7 @@ import {
   applyReimportPlan,
   chunkArray,
   createTurmaFromImport,
+  deleteTurma,
   getLocalDataForMigration,
   getTurmaWithAlunos,
   inactivateAluno,
@@ -484,5 +485,37 @@ describe('services/turmaRepo', () => {
     // 5. Old demo key was removed and no more local data to migrate
     const afterSummary = getLocalDataForMigration('uid-firebase-real');
     expect(afterSummary.totalTurmas).toBe(0);
+  });
+
+  it('deletes an existing turma and all its students permanently from storage', async () => {
+    const parsed = makeSampleParsedChamada();
+    const { turma } = await createTurmaFromImport(
+      'uid-prof-delete',
+      {
+        nome: 'Turma Para Excluir',
+        diaHorario: 'Quinta-feira, 19h30',
+        local: 'Belo Horizonte',
+        catedras: ['Filosofia para Viver'],
+      },
+      parsed
+    );
+
+    const initialTurmas = await listTurmas('uid-prof-delete');
+    expect(initialTurmas).toHaveLength(1);
+
+    await deleteTurma('uid-prof-delete', turma.id);
+
+    const remainingTurmas = await listTurmas('uid-prof-delete');
+    expect(remainingTurmas).toHaveLength(0);
+
+    await expect(
+      getTurmaWithAlunos('uid-prof-delete', turma.id)
+    ).rejects.toThrow('Turma não encontrada.');
+  });
+
+  it('rejects deletion of a non-existent turma with error', async () => {
+    await expect(
+      deleteTurma('uid-prof-delete', 'turma-inexistente-123')
+    ).rejects.toThrow('Turma não encontrada.');
   });
 });

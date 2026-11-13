@@ -427,6 +427,35 @@ export async function setTurmaStatus(
   return updatedTurma;
 }
 
+export async function deleteTurma(uid: string, turmaId: string): Promise<void> {
+  const db = getFirestoreDb();
+  if (db) {
+    const turmaRef = doc(db, 'users', uid, 'turmas', turmaId);
+    const alunosRef = collection(db, 'users', uid, 'turmas', turmaId, 'alunos');
+    const [turmaSnap, alunosSnap] = await Promise.all([
+      getDoc(turmaRef),
+      getDocs(alunosRef),
+    ]);
+    if (!turmaSnap.exists()) {
+      throw new Error('Turma não encontrada.');
+    }
+    const batch = writeBatch(db);
+    alunosSnap.docs.forEach((d) => {
+      batch.delete(d.ref);
+    });
+    batch.delete(turmaRef);
+    await batch.commit();
+    return;
+  }
+
+  const store = readUserStore(uid);
+  if (!store.turmas[turmaId]) {
+    throw new Error('Turma não encontrada.');
+  }
+  delete store.turmas[turmaId];
+  writeUserStore(uid, store);
+}
+
 export async function addTurmaComment(
   uid: string,
   turmaId: string,
