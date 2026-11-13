@@ -321,8 +321,8 @@ export function App(): React.ReactElement {
           <div className="hero-brand">
             <div className="hero-brand-header">
               <img
-                src={`${import.meta.env.BASE_URL}nova-acropole-logo-white.png`}
-                alt="Nova Acrópole"
+                src={`${import.meta.env.BASE_URL}juntos-emblem-white.svg`}
+                alt="Emblema Juntos"
                 className="hero-logo"
               />
               <span className="hero-divider" aria-hidden="true" />
@@ -457,16 +457,16 @@ export function App(): React.ReactElement {
         <div className="footer-inner">
           <div className="footer-brand">
             <img
-              src={`${import.meta.env.BASE_URL}nova-acropole-logo-teal.png`}
-              alt="Nova Acrópole"
+              src={`${import.meta.env.BASE_URL}juntos-emblem-teal.svg`}
+              alt="Emblema Juntos"
               className="footer-logo"
             />
             <p className="footer-tagline">
-              Organização Internacional Nova Acrópole — Filosofia • Cultura • Voluntariado
+              Juntos — Plataforma de Gestão Pedagógica e Acompanhamento de Turmas
             </p>
           </div>
           <p className="footer-copy">
-            Juntos &copy; {new Date().getFullYear()} — Plataforma de Gestão de Turmas e Chamadas
+            Juntos &copy; {new Date().getFullYear()} — Todos os direitos reservados
           </p>
         </div>
       </footer>

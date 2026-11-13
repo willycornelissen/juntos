@@ -67,7 +67,7 @@ export function LoginView({ onSignIn }: LoginViewProps): React.ReactElement {
           />
         </div>
         <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-          <span className="login-tagline-badge">Nova Acrópole</span>
+          <span className="login-tagline-badge">Gestão Pedagógica</span>
           <h1>Juntos.</h1>
         </div>
         <p className="subtitle" style={{ textAlign: 'center' }}>
