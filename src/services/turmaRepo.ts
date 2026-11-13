@@ -45,6 +45,25 @@ function generateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${idCounter}`;
 }
 
+export function sanitizeFirestoreData<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeFirestoreData) as unknown as T;
+  }
+  if (typeof obj === 'object') {
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      if (val !== undefined) {
+        cleaned[key] = sanitizeFirestoreData(val);
+      }
+    }
+    return cleaned as T;
+  }
+  return obj;
+}
+
 export function chunkArray<T>(
   items: T[],
   maxChunkSize = DEFAULT_BATCH_CHUNK_SIZE
@@ -257,7 +276,7 @@ export async function createTurmaFromImport(
   if (db) {
     const turmaRef = doc(db, 'users', uid, 'turmas', turmaId);
     const ops: Array<(batch: ReturnType<typeof writeBatch>) => void> = [
-      (batch) => batch.set(turmaRef, turma),
+      (batch) => batch.set(turmaRef, sanitizeFirestoreData(turma)),
       ...alunos.map(
         (aluno) => (batch: ReturnType<typeof writeBatch>) =>
           batch.set(
@@ -270,7 +289,7 @@ export async function createTurmaFromImport(
               'alunos',
               aluno.studentKey
             ),
-            aluno
+            sanitizeFirestoreData(aluno)
           )
       ),
     ];
@@ -314,7 +333,7 @@ export async function applyReimportPlan(
   if (db) {
     const turmaRef = doc(db, 'users', uid, 'turmas', turmaId);
     const ops: Array<(batch: ReturnType<typeof writeBatch>) => void> = [
-      (batch) => batch.set(turmaRef, updatedTurma),
+      (batch) => batch.set(turmaRef, sanitizeFirestoreData(updatedTurma)),
       ...sortedStudents.map(
         (aluno) => (batch: ReturnType<typeof writeBatch>) =>
           batch.set(
@@ -327,7 +346,7 @@ export async function applyReimportPlan(
               'alunos',
               aluno.studentKey
             ),
-            aluno
+            sanitizeFirestoreData(aluno)
           )
       ),
     ];
@@ -371,7 +390,10 @@ export async function updateTurmaMetadata(
 
   const db = getFirestoreDb();
   if (db) {
-    await setDoc(doc(db, 'users', uid, 'turmas', turmaId), updatedTurma);
+    await setDoc(
+      doc(db, 'users', uid, 'turmas', turmaId),
+      sanitizeFirestoreData(updatedTurma)
+    );
     return updatedTurma;
   }
 
@@ -419,7 +441,10 @@ export async function setTurmaStatus(
 
   const db = getFirestoreDb();
   if (db) {
-    await setDoc(doc(db, 'users', uid, 'turmas', turmaId), updatedTurma);
+    await setDoc(
+      doc(db, 'users', uid, 'turmas', turmaId),
+      sanitizeFirestoreData(updatedTurma)
+    );
     return updatedTurma;
   }
 
@@ -485,7 +510,10 @@ export async function addTurmaComment(
 
   const db = getFirestoreDb();
   if (db) {
-    await setDoc(doc(db, 'users', uid, 'turmas', turmaId), updatedTurma);
+    await setDoc(
+      doc(db, 'users', uid, 'turmas', turmaId),
+      sanitizeFirestoreData(updatedTurma)
+    );
     return entry;
   }
 
@@ -533,7 +561,10 @@ export async function saveLessonComment(
 
   const db = getFirestoreDb();
   if (db) {
-    await setDoc(doc(db, 'users', uid, 'turmas', turmaId), updatedTurma);
+    await setDoc(
+      doc(db, 'users', uid, 'turmas', turmaId),
+      sanitizeFirestoreData(updatedTurma)
+    );
     return updatedTurma;
   }
 
@@ -578,7 +609,7 @@ export async function addAlunoComment(
   if (db) {
     await setDoc(
       doc(db, 'users', uid, 'turmas', turmaId, 'alunos', studentKey),
-      updatedAluno
+      sanitizeFirestoreData(updatedAluno)
     );
     return entry;
   }
@@ -643,10 +674,13 @@ export async function inactivateAluno(
   const db = getFirestoreDb();
   if (db) {
     const batch = writeBatch(db);
-    batch.set(doc(db, 'users', uid, 'turmas', turmaId), updatedTurma);
+    batch.set(
+      doc(db, 'users', uid, 'turmas', turmaId),
+      sanitizeFirestoreData(updatedTurma)
+    );
     batch.set(
       doc(db, 'users', uid, 'turmas', turmaId, 'alunos', studentKey),
-      updatedAluno
+      sanitizeFirestoreData(updatedAluno)
     );
     await batch.commit();
     return { turma: updatedTurma, aluno: updatedAluno };
@@ -771,7 +805,9 @@ export async function migrateLocalDataToFirestore(
 
     for (const b of summary.bundles) {
       const turmaRef = doc(db, 'users', targetUid, 'turmas', b.turma.id);
-      operations.push((batch) => batch.set(turmaRef, b.turma));
+      operations.push((batch) =>
+        batch.set(turmaRef, sanitizeFirestoreData(b.turma))
+      );
 
       const alunos = Object.values(b.alunos || {});
       for (const aluno of alunos) {
@@ -784,7 +820,9 @@ export async function migrateLocalDataToFirestore(
           'alunos',
           aluno.studentKey
         );
-        operations.push((batch) => batch.set(alunoRef, aluno));
+        operations.push((batch) =>
+          batch.set(alunoRef, sanitizeFirestoreData(aluno))
+        );
       }
     }
 

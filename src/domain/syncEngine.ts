@@ -91,7 +91,9 @@ export function computeReimportPlan(
           incomingLesson.instructor.trim() !== ''
             ? incomingLesson.instructor
             : existingLesson.instructor,
-        comentario: existingLesson.comentario,
+        ...(existingLesson.comentario
+          ? { comentario: existingLesson.comentario }
+          : {}),
       };
       mergedLessonsMap.set(existingLesson.dateKey, mergedLesson);
 
@@ -159,7 +161,9 @@ export function computeReimportPlan(
           ...existing,
           studentKey: key,
           externalId: updatedExternalId,
-          sequencia: updatedSequencia,
+          ...(updatedSequencia !== undefined
+            ? { sequencia: updatedSequencia }
+            : {}),
           nome: updatedNome,
           status: 'Ativo',
           droppedAt: undefined,
@@ -168,6 +172,9 @@ export function computeReimportPlan(
           updatedAt: importDateIso,
         };
         delete reactivated.droppedAt;
+        if (updatedSequencia === undefined) {
+          delete reactivated.sequencia;
+        }
         updatedStudentsMap.set(key, reactivated);
         reenrolledStudents.push({
           studentKey: key,
@@ -175,17 +182,23 @@ export function computeReimportPlan(
           nome: updatedNome,
         });
       } else {
-        updatedStudentsMap.set(key, {
+        const updatedAluno: AlunoRecord = {
           ...existing,
           studentKey: key,
           externalId: updatedExternalId,
-          sequencia: updatedSequencia,
+          ...(updatedSequencia !== undefined
+            ? { sequencia: updatedSequencia }
+            : {}),
           nome: updatedNome,
           status: 'Ativo',
           presencas: mergedPresencas,
           comentarios: [...existing.comentarios],
           updatedAt: importDateIso,
-        });
+        };
+        if (updatedSequencia === undefined) {
+          delete updatedAluno.sequencia;
+        }
+        updatedStudentsMap.set(key, updatedAluno);
         unchangedActiveCount += 1;
       }
     } else {
@@ -227,7 +240,9 @@ export function computeReimportPlan(
       const novoAluno: AlunoRecord = {
         studentKey: key,
         externalId: incoming.externalId.trim(),
-        sequencia: incoming.sequencia,
+        ...(incoming.sequencia !== undefined
+          ? { sequencia: incoming.sequencia }
+          : {}),
         nome: incoming.nome.trim(),
         status: 'Ativo',
         presencas: { ...incoming.presencas },

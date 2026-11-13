@@ -12,6 +12,7 @@ import {
   listTurmas,
   migrateLocalDataToFirestore,
   resetLocalStoreForTests,
+  sanitizeFirestoreData,
   saveLessonComment,
   setTurmaStatus,
   updateTurmaMetadata,
@@ -606,5 +607,70 @@ describe('services/turmaRepo', () => {
         'Texto'
       )
     ).rejects.toThrow('Aula não encontrada para a data informada.');
+  });
+
+  it('sanitizeFirestoreData recursively removes undefined fields to protect Firestore writes', () => {
+    const rawData = {
+      id: 'turma-1',
+      nome: 'Turma Nuth LVII',
+      cidadePlanilha: undefined,
+      closedAt: undefined,
+      lessons: [
+        {
+          dateKey: '14/10/26',
+          isoDate: '2026-10-14',
+          course: 'Filosofia',
+          theme: 'Tema 1',
+          instructor: 'Instrutor',
+          comentario: undefined,
+        },
+      ],
+      alunos: {
+        '123': {
+          studentKey: '123',
+          nome: 'Aluno Teste',
+          sequencia: undefined,
+          droppedAt: undefined,
+          presencas: { '14/10/26': 'P' },
+        },
+      },
+      tags: ['A', undefined, 'B'],
+      count: 0,
+      active: false,
+      nullField: null,
+    };
+
+    const cleaned = sanitizeFirestoreData(rawData);
+
+    expect(cleaned).toEqual({
+      id: 'turma-1',
+      nome: 'Turma Nuth LVII',
+      lessons: [
+        {
+          dateKey: '14/10/26',
+          isoDate: '2026-10-14',
+          course: 'Filosofia',
+          theme: 'Tema 1',
+          instructor: 'Instrutor',
+        },
+      ],
+      alunos: {
+        '123': {
+          studentKey: '123',
+          nome: 'Aluno Teste',
+          presencas: { '14/10/26': 'P' },
+        },
+      },
+      tags: ['A', undefined, 'B'],
+      count: 0,
+      active: false,
+      nullField: null,
+    });
+
+    expect('cidadePlanilha' in cleaned).toBe(false);
+    expect('closedAt' in cleaned).toBe(false);
+    expect('comentario' in cleaned.lessons[0]).toBe(false);
+    expect('sequencia' in cleaned.alunos['123']).toBe(false);
+    expect('droppedAt' in cleaned.alunos['123']).toBe(false);
   });
 });
