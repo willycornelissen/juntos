@@ -56,5 +56,5 @@ Como professor, quero que as alterações de comentários da aula sejam refletid
 | --- | --- | --- | --- |
 | AULA-01 | US-01 | Preservação de comentário de aula no domínio e reimportação (`syncEngine.ts`) | verified |
 | AULA-02 | US-02 | Persistência e remoção de comentário de aula no repositório `turmaRepo` | verified |
-| AULA-03 | US-03 | Diálogo de detalhes da aula, ícone indicador e ações em `TurmaDetailView` | in tasks |
+| AULA-03 | US-03 | Diálogo de detalhes da aula, ícone indicador e ações em `TurmaDetailView` | verified |
 | AULA-04 | US-04 | Integração dos handlers de comentário de aula em `App.tsx` | in tasks |

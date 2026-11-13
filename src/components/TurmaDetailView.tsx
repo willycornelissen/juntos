@@ -7,6 +7,7 @@ import {
 import { formatDatePtBr } from '../domain/syncEngine';
 import {
   type AlunoRecord,
+  type LessonColumn,
   type Turma,
   type TurmaStatus,
   type UpdateTurmaMetadataInput,
@@ -31,6 +32,10 @@ export interface TurmaDetailViewProps {
   ) => Promise<void>;
   onAddTurmaComment: (text: string) => Promise<void>;
   onDeleteTurma?: () => Promise<void>;
+  onSaveLessonComment?: (
+    dateKey: string,
+    text: string | null
+  ) => Promise<void>;
 }
 
 export function TurmaDetailView({
@@ -43,6 +48,7 @@ export function TurmaDetailView({
   onChangeStatus,
   onAddTurmaComment,
   onDeleteTurma,
+  onSaveLessonComment,
 }: TurmaDetailViewProps): React.ReactElement {
   // Inline metadata edit state
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
@@ -75,6 +81,58 @@ export function TurmaDetailView({
   const [newCommentText, setNewCommentText] = useState('');
   const [commentError, setCommentError] = useState<string | null>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
+
+  // Lesson details & comment modal state
+  const [selectedLesson, setSelectedLesson] = useState<LessonColumn | null>(
+    null
+  );
+  const [lessonCommentInput, setLessonCommentInput] = useState('');
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [savingLessonComment, setSavingLessonComment] = useState(false);
+  const [lessonCommentError, setLessonCommentError] = useState<string | null>(
+    null
+  );
+
+  const handleOpenLessonModal = (lesson: LessonColumn) => {
+    setSelectedLesson(lesson);
+    setLessonCommentInput(lesson.comentario ?? '');
+    setIsEditingComment(!lesson.comentario);
+    setLessonCommentError(null);
+  };
+
+  const handleSaveLessonComment = async () => {
+    if (!selectedLesson || !onSaveLessonComment) return;
+    const trimmed = lessonCommentInput.trim();
+    if (!trimmed) return;
+    setSavingLessonComment(true);
+    setLessonCommentError(null);
+    try {
+      await onSaveLessonComment(selectedLesson.dateKey, trimmed);
+      setSelectedLesson(null);
+    } catch (err) {
+      setLessonCommentError(
+        err instanceof Error ? err.message : 'Falha ao salvar comentário.'
+      );
+    } finally {
+      setSavingLessonComment(false);
+    }
+  };
+
+  const handleRemoveLessonComment = async () => {
+    if (!selectedLesson || !onSaveLessonComment) return;
+    setSavingLessonComment(true);
+    setLessonCommentError(null);
+    try {
+      await onSaveLessonComment(selectedLesson.dateKey, null);
+      setSelectedLesson(null);
+    } catch (err) {
+      setLessonCommentError(
+        err instanceof Error ? err.message : 'Falha ao remover comentário.'
+      );
+    } finally {
+      setSavingLessonComment(false);
+    }
+  };
 
   const startEditMetadata = () => {
     setEditNome(turma.nome);
@@ -608,8 +666,48 @@ export function TurmaDetailView({
                   <th
                     key={lesson.dateKey}
                     title={`${lesson.course} — ${lesson.theme} (${lesson.instructor})`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleOpenLessonModal(lesson)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleOpenLessonModal(lesson);
+                      }
+                    }}
+                    aria-label={`Detalhes da aula ${lesson.dateKey}`}
                   >
-                    <div>{lesson.dateKey}</div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <span
+                        style={{
+                          textDecoration: 'underline',
+                          textDecorationStyle: 'dotted',
+                        }}
+                      >
+                        {lesson.dateKey}
+                      </span>
+                      {lesson.comentario && (
+                        <span
+                          role="img"
+                          aria-label={`Comentário na aula de ${lesson.dateKey}`}
+                          title={`Comentário: ${lesson.comentario}`}
+                          style={{
+                            fontSize: '0.85rem',
+                            display: 'inline-block',
+                          }}
+                        >
+                          💬
+                        </span>
+                      )}
+                    </div>
                     <div
                       style={{
                         fontSize: '0.74rem',
@@ -848,6 +946,244 @@ export function TurmaDetailView({
               >
                 {deletingTurma ? 'Excluindo turma...' : 'Confirmar Exclusão'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedLesson && (
+        <div className="modal-backdrop" role="presentation">
+          <div
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lesson-dialog-title"
+            style={{ maxWidth: '520px' }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <h3
+                id="lesson-dialog-title"
+                className="card-title"
+                style={{ margin: 0 }}
+              >
+                Detalhes da Aula
+              </h3>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '0.2rem 0.6rem', fontSize: '0.85rem' }}
+                onClick={() => {
+                  if (!savingLessonComment) {
+                    setSelectedLesson(null);
+                  }
+                }}
+                disabled={savingLessonComment}
+                aria-label="Fechar detalhes da aula"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                marginBottom: '1.25rem',
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--muted)',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    display: 'block',
+                  }}
+                >
+                  Data
+                </span>
+                <strong style={{ fontSize: '1.1rem' }}>
+                  {selectedLesson.dateKey}
+                </strong>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--muted)',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    display: 'block',
+                  }}
+                >
+                  Tema
+                </span>
+                <span>{selectedLesson.theme || 'Não informado'}</span>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--muted)',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    display: 'block',
+                  }}
+                >
+                  Professor
+                </span>
+                <span>{selectedLesson.instructor || 'Não informado'}</span>
+              </div>
+
+              {selectedLesson.course && (
+                <div>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--muted)',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      display: 'block',
+                    }}
+                  >
+                    Curso
+                  </span>
+                  <span style={{ color: 'var(--muted)' }}>
+                    {selectedLesson.course}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <hr
+              style={{
+                border: 'none',
+                borderTop: '1px solid var(--border)',
+                margin: '1rem 0',
+              }}
+            />
+
+            <div>
+              <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem' }}>
+                Comentário da Aula
+              </h4>
+
+              {lessonCommentError && (
+                <div
+                  className="warning"
+                  role="alert"
+                  style={{ marginBottom: '0.75rem' }}
+                >
+                  {lessonCommentError}
+                </div>
+              )}
+
+              {selectedLesson.comentario && !isEditingComment ? (
+                <div>
+                  <div
+                    style={{
+                      background: 'var(--bg, #fbfaf8)',
+                      padding: '0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      whiteSpace: 'pre-wrap',
+                      marginBottom: '0.85rem',
+                      fontSize: '0.92rem',
+                    }}
+                  >
+                    {selectedLesson.comentario}
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setLessonCommentInput(selectedLesson.comentario ?? '');
+                        setIsEditingComment(true);
+                      }}
+                      disabled={savingLessonComment}
+                    >
+                      Editar comentário
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      onClick={() => void handleRemoveLessonComment()}
+                      disabled={savingLessonComment}
+                    >
+                      {savingLessonComment
+                        ? 'Removendo...'
+                        : 'Remover comentário'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <textarea
+                    rows={3}
+                    placeholder="Adicione uma anotação ou comentário para esta aula..."
+                    value={lessonCommentInput}
+                    onChange={(e) => setLessonCommentInput(e.target.value)}
+                    disabled={savingLessonComment}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      marginBottom: '0.75rem',
+                      boxSizing: 'border-box',
+                    }}
+                    aria-label="Campo de comentário da aula"
+                  />
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    {selectedLesson.comentario && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setIsEditingComment(false)}
+                        disabled={savingLessonComment}
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => void handleSaveLessonComment()}
+                      disabled={
+                        savingLessonComment || !lessonCommentInput.trim()
+                      }
+                    >
+                      {savingLessonComment
+                        ? 'Salvando...'
+                        : 'Salvar comentário da aula'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

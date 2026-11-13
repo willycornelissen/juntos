@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { TurmaDetailView } from '../TurmaDetailView';
 import type { AlunoRecord, Turma } from '../../domain/types';
@@ -496,5 +496,154 @@ describe('components/TurmaDetailView', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Falha no banco ao excluir.');
     });
+  });
+
+  it('opens lesson details dialog when clicking a lesson header cell (AULA-03 AC 1)', () => {
+    render(
+      <TurmaDetailView
+        turma={sampleTurma}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+      />
+    );
+
+    const lessonHeader = screen.getByRole('button', {
+      name: /detalhes da aula 14\/10\/26/i,
+    });
+    fireEvent.click(lessonHeader);
+
+    const dialog = screen.getByRole('dialog', { name: /detalhes da aula/i });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText('Transpasso Aula 10')).toBeInTheDocument();
+    expect(
+      within(dialog).getByText('Willy Garabini Cornelissen')
+    ).toBeInTheDocument();
+
+    // Close modal
+    fireEvent.click(
+      screen.getByRole('button', { name: /fechar detalhes da aula/i })
+    );
+    expect(
+      screen.queryByRole('heading', { name: /detalhes da aula/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('displays comment icon on lesson cell with comment and allows editing and removal (AULA-03 AC 2, 3, 4, 5)', async () => {
+    const onSaveLessonComment = vi.fn().mockResolvedValue(undefined);
+
+    const turmaWithComment: Turma = {
+      ...sampleTurma,
+      lessons: [
+        {
+          ...sampleTurma.lessons[0],
+          comentario: 'Anotação importante sobre a aula 10.',
+        },
+        sampleTurma.lessons[1],
+      ],
+    };
+
+    const { rerender } = render(
+      <TurmaDetailView
+        turma={turmaWithComment}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+        onSaveLessonComment={onSaveLessonComment}
+      />
+    );
+
+    // Comment icon rendered
+    expect(
+      screen.getByRole('img', {
+        name: /comentário na aula de 14\/10\/26/i,
+      })
+    ).toBeInTheDocument();
+
+    // Click to open dialog
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /detalhes da aula 14\/10\/26/i,
+      })
+    );
+
+    const dialog = screen.getByRole('dialog', { name: /detalhes da aula/i });
+    // Shows existing comment
+    expect(
+      within(dialog).getByText('Anotação importante sobre a aula 10.')
+    ).toBeInTheDocument();
+
+    // Click "Editar comentário"
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: /editar comentário/i })
+    );
+
+    const textarea = within(dialog).getByRole('textbox', {
+      name: /campo de comentário da aula/i,
+    });
+    expect(textarea).toHaveValue('Anotação importante sobre a aula 10.');
+
+    fireEvent.change(textarea, {
+      target: { value: 'Comentário editado da aula 10.' },
+    });
+    fireEvent.click(
+      within(dialog).getByRole('button', {
+        name: /salvar comentário da aula/i,
+      })
+    );
+
+    await waitFor(() => {
+      expect(onSaveLessonComment).toHaveBeenCalledWith(
+        '14/10/26',
+        'Comentário editado da aula 10.'
+      );
+    });
+
+    // Reopen and test removal
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /detalhes da aula 14\/10\/26/i,
+      })
+    );
+
+    const reopenDialog = screen.getByRole('dialog', {
+      name: /detalhes da aula/i,
+    });
+    fireEvent.click(
+      within(reopenDialog).getByRole('button', { name: /remover comentário/i })
+    );
+
+    await waitFor(() => {
+      expect(onSaveLessonComment).toHaveBeenCalledWith('14/10/26', null);
+    });
+
+    // Rerender with removed comment to verify icon disappears
+    rerender(
+      <TurmaDetailView
+        turma={sampleTurma}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+        onSaveLessonComment={onSaveLessonComment}
+      />
+    );
+
+    expect(
+      screen.queryByRole('img', {
+        name: /comentário na aula de 14\/10\/26/i,
+      })
+    ).not.toBeInTheDocument();
   });
 });
