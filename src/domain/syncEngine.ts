@@ -1,4 +1,5 @@
 import { normalizeStudentKey } from './chamadaParser';
+import { isSameTurmaNome } from './turmaNameValidation';
 import type {
   AlunoRecord,
   CommentEntry,
@@ -43,6 +44,15 @@ export function computeReimportPlan(
   parsed: ParsedChamada,
   importDateIso: string
 ): ReimportPlan {
+  if (
+    parsed.nomeTurmaPlanilha &&
+    !isSameTurmaNome(existingTurma.nome, parsed.nomeTurmaPlanilha)
+  ) {
+    throw new Error(
+      `A planilha pertence à turma "${parsed.nomeTurmaPlanilha}", que é diferente da turma atual ("${existingTurma.nome}").`
+    );
+  }
+
   const formattedImportDate = formatDatePtBr(importDateIso);
 
   const existingLessonsByDateKey = new Map<string, LessonColumn>();

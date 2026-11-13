@@ -4,6 +4,7 @@ import {
   parseChamadaBuffer,
 } from '../domain/chamadaParser';
 import { computeReimportPlan } from '../domain/syncEngine';
+import { isSameTurmaNome } from '../domain/turmaNameValidation';
 import type { AlunoRecord, ReimportPlan, Turma } from '../domain/types';
 import { readFileAsArrayBuffer } from './TurmasDashboard';
 
@@ -38,6 +39,21 @@ export function ReimportModal({
     try {
       const buffer = await readFileAsArrayBuffer(file);
       const parsed = parseChamadaBuffer(buffer);
+
+      if (!isSameTurmaNome(turma.nome, parsed.nomeTurmaPlanilha)) {
+        setPlan(null);
+        if (parsed.nomeTurmaPlanilha) {
+          setErrorMessage(
+            `A planilha selecionada pertence à turma "${parsed.nomeTurmaPlanilha}", que é diferente da turma atual ("${turma.nome}"). A importação não pode ser realizada.`
+          );
+        } else {
+          setErrorMessage(
+            `A planilha selecionada não possui o nome da turma na linha 2. A importação só é permitida quando o nome coincide com "${turma.nome}".`
+          );
+        }
+        return;
+      }
+
       const effectiveIso = nowIso ?? new Date().toISOString();
       const computedPlan = computeReimportPlan(
         turma,

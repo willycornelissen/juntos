@@ -450,4 +450,18 @@ describe('domain/syncEngine', () => {
     expect(merged?.theme).toBe('Transpasso Aula 10 - Atualizado');
     expect(merged?.comentario).toBe('Aula especial com debate em grupo.');
   });
+
+  it('rejects reimport when spreadsheet class name belongs to a different class', () => {
+    const turma = makeBaseTurma(); // Turma Pampulha (QUA)
+    const parsed: ParsedChamada = {
+      cidadePlanilha: 'Belo Horizonte',
+      nomeTurmaPlanilha: 'Turma Savassi (TER)',
+      lessons: turma.lessons,
+      students: [],
+    };
+
+    expect(() =>
+      computeReimportPlan(turma, [], parsed, '2026-10-15T10:00:00.000Z')
+    ).toThrow(/diferente da turma atual/i);
+  });
 });

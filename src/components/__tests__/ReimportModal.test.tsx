@@ -252,4 +252,82 @@ describe('components/ReimportModal', () => {
       );
     });
   });
+
+  it('displays warning alert and prevents reimport when spreadsheet class name belongs to a different class', async () => {
+    const onConfirmReimport = vi.fn();
+    render(
+      <ReimportModal
+        turma={existingTurma}
+        alunos={existingAlunos}
+        onClose={vi.fn()}
+        onConfirmReimport={onConfirmReimport}
+      />
+    );
+
+    // Row 2 has 'Turma Savassi (TER)', while existingTurma is 'Turma Pampulha (QUA)'
+    const mismatchedRows = [
+      ['Belo Horizonte'],
+      ['Turma Savassi (TER)', '', '', '', '', '', 'Filosofia para viver'],
+      ['Tema', '', '', '', '', '', 'Transpasso Aula 10'],
+      ['Instrutores', '', '', '', '', '', 'Willy Garabini Cornelissen'],
+      ['', '', '% Presença'],
+      ['ID', '1', 'Nome', 'Status', '% Trim', '% Ano', '14/10/26'],
+      ['14820', '1', 'Claudia Marcia Marques', 'Ativo', '', '', 'P'],
+    ];
+
+    fireEvent.change(screen.getByLabelText(/selecionar planilha/i), {
+      target: { files: [buildXlsxFile(mismatchedRows)] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /A planilha selecionada pertence à turma "Turma Savassi \(TER\)", que é diferente da turma atual \("Turma Pampulha \(QUA\)"\)\. A importação não pode ser realizada\./i
+      );
+    });
+
+    expect(screen.queryByText(/resumo da sincronização/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /confirmar sincronização/i })
+    ).toBeDisabled();
+    expect(onConfirmReimport).not.toHaveBeenCalled();
+  });
+
+  it('displays warning alert and prevents reimport when spreadsheet has no class name on row 2', async () => {
+    const onConfirmReimport = vi.fn();
+    render(
+      <ReimportModal
+        turma={existingTurma}
+        alunos={existingAlunos}
+        onClose={vi.fn()}
+        onConfirmReimport={onConfirmReimport}
+      />
+    );
+
+    // Row 2 has empty class name
+    const missingNameRows = [
+      ['Belo Horizonte'],
+      ['', '', '', '', '', '', 'Filosofia para viver'],
+      ['Tema', '', '', '', '', '', 'Transpasso Aula 10'],
+      ['Instrutores', '', '', '', '', '', 'Willy Garabini Cornelissen'],
+      ['', '', '% Presença'],
+      ['ID', '1', 'Nome', 'Status', '% Trim', '% Ano', '14/10/26'],
+      ['14820', '1', 'Claudia Marcia Marques', 'Ativo', '', '', 'P'],
+    ];
+
+    fireEvent.change(screen.getByLabelText(/selecionar planilha/i), {
+      target: { files: [buildXlsxFile(missingNameRows)] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /A planilha selecionada não possui o nome da turma na linha 2\. A importação só é permitida quando o nome coincide com "Turma Pampulha \(QUA\)"\./i
+      );
+    });
+
+    expect(screen.queryByText(/resumo da sincronização/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /confirmar sincronização/i })
+    ).toBeDisabled();
+    expect(onConfirmReimport).not.toHaveBeenCalled();
+  });
 });
