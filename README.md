@@ -1,6 +1,6 @@
 # Juntos.
 
-**Juntos** é uma aplicação web estática (SPA em **React 19 + Vite + TypeScript**) projetada para ser hospedada no **GitHub Pages** e integrada ao **Firebase (Authentication + Cloud Firestore)**. Ela permite que professores façam o acompanhamento longitudinal das suas turmas e da ficha particular de cada aluno a partir da importação periódica das planilhas de chamada (`.xlsx`).
+**Juntos** é uma aplicação web estática (SPA em **React 19 + Vite + TypeScript**) projetada para ser hospedada no **Firebase Hosting** e integrada ao **Firebase (Authentication + Cloud Firestore)**. Ela permite que professores façam o acompanhamento longitudinal das suas turmas e da ficha particular de cada aluno a partir da importação periódica das planilhas de chamada (`.xlsx`).
 
 ---
 
@@ -82,7 +82,7 @@ Para usar autenticação real e sincronizar seus dados na nuvem com o Firebase (
 1. No menu lateral do Firebase Console, acesse **Build → Authentication → Sign-in method**.
 2. Habilite o provedor **E-mail/senha** (*Email/Password*).
 3. Na aba **Users**, clique em **Adicionar usuário** e cadastre o e-mail e a senha do professor.
-4. Na aba **Settings → Authorized domains**, adicione o domínio onde o site ficará hospedado (ex.: `seu-usuario.github.io` ou seu domínio próprio como `juntos.willy.dev.br`).
+4. Na aba **Settings → Authorized domains**, garanta que os domínios do Firebase Hosting (`acompanhamento-filosofico.web.app`, `acompanhamento-filosofico.firebaseapp.com`, `juntos-95c91.firebaseapp.com`) e seu domínio próprio (ex.: `juntos.willy.dev.br`) estejam autorizados.
 
 ### Passo 3.3 — Criar o banco Cloud Firestore e Configurar as Regras de Segurança
 1. No menu lateral, acesse **Build → Firestore Database** e clique em **Criar banco de dados**.
@@ -132,11 +132,24 @@ O parser lê a aba **`chamada`** (ou a primeira aba da planilha) seguindo o mode
 
 ---
 
-## 6. Deploy no GitHub Pages
+## 6. Deploy no Firebase Hosting
 
-O `vite.config.ts` já está configurado com `base: './'`, permitindo que o build funcione tanto em subcaminhos (`https://usuario.github.io/juntos/`) quanto em domínios customizados (`https://juntos.willy.dev.br/`).
+O projeto está configurado com `base: '/'` em `vite.config.ts`, `firebase.json` (seção `hosting` com `site: "acompanhamento-filosofico"` apontando para `./dist` e rewrite SPA para `/index.html`) e `.firebaserc` vinculado ao projeto `juntos-95c91` (URL pública: `https://acompanhamento-filosofico.web.app`).
 
-### Passos para configurar o GitHub Actions:
+### Deploy manual (Firebase CLI)
+
+1. Instale ou utilize o Firebase CLI autenticado (`firebase login`).
+2. Garanta que o arquivo `.env.local` esteja preenchido com as credenciais Web do Firebase para o build de produção.
+3. Execute o build e o deploy:
+   ```bash
+   npm run deploy
+   ```
+   (equivalente a `npm run build && firebase deploy --only hosting`).
+
+### Deploy automático (GitHub Actions)
+
+O workflow `.github/workflows/deploy.yml` executa os testes, gera o build em `./dist` e publica no Firebase Hosting a cada push na `main`.
+
 1. No repositório do GitHub, vá em **Settings → Secrets and variables → Actions** e cadastre os *Repository secrets*:
    - `VITE_FIREBASE_API_KEY`
    - `VITE_FIREBASE_AUTH_DOMAIN`
@@ -144,5 +157,8 @@ O `vite.config.ts` já está configurado com `base: './'`, permitindo que o buil
    - `VITE_FIREBASE_STORAGE_BUCKET`
    - `VITE_FIREBASE_MESSAGING_SENDER_ID`
    - `VITE_FIREBASE_APP_ID`
-2. Em **Settings → Pages**, em *Build and deployment*, selecione **Source: GitHub Actions**.
-3. Crie um workflow `.github/workflows/deploy.yml` que execute `npm ci && npm run build` injetando as variáveis `VITE_FIREBASE_*` e publique a pasta `./dist` usando `actions/deploy-pages@v4`.
+   - `FIREBASE_SERVICE_ACCOUNT` (JSON da conta de serviço com permissão de deploy no Firebase Hosting)
+
+### Domínio customizado
+
+Para usar um domínio próprio (ex.: `juntos.willy.dev.br`), configure-o diretamente em **Firebase Console → Build → Hosting → Add custom domain** e aponte os registros DNS indicados pelo Firebase.
