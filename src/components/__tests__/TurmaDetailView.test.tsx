@@ -646,4 +646,57 @@ describe('components/TurmaDetailView', () => {
       })
     ).not.toBeInTheDocument();
   });
+
+  it('uses singular for 1 dropped enrollment and plural for 0 or multiple in the class header card', () => {
+    const { rerender } = render(
+      <TurmaDetailView
+        turma={{ ...sampleTurma, droppedStudentsCount: 1 }}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText(/2 ativos · 1 inscrição baixada$/i)
+    ).toBeInTheDocument();
+
+    rerender(
+      <TurmaDetailView
+        turma={{ ...sampleTurma, droppedStudentsCount: 3 }}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText(/2 ativos · 3 inscrições baixadas$/i)
+    ).toBeInTheDocument();
+
+    rerender(
+      <TurmaDetailView
+        turma={{ ...sampleTurma, droppedStudentsCount: 0 }}
+        alunos={sampleAlunos}
+        onBack={vi.fn()}
+        onSelectStudent={vi.fn()}
+        onOpenReimportModal={vi.fn()}
+        onUpdateMetadata={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onAddTurmaComment={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText(/2 ativos · 0 inscrições baixadas$/i)
+    ).toBeInTheDocument();
+  });
 });

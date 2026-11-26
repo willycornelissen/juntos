@@ -341,4 +341,38 @@ describe('components/LoginView & TurmasDashboard', () => {
       'Turma C (SEX)',
     ]);
   });
+
+  it('uses singular for 1 dropped enrollment and plural for multiple dropped enrollments in class cards', () => {
+    const turmaMultipleDropped: Turma = {
+      ...sampleActiveTurma,
+      id: 'turma-multi-dropped',
+      nome: 'Turma Centro (QUI)',
+      activeStudentsCount: 5,
+      droppedStudentsCount: 2,
+    };
+
+    const turmaNoDropped: Turma = {
+      ...sampleActiveTurma,
+      id: 'turma-no-dropped',
+      nome: 'Turma Funcionários (SEX)',
+      activeStudentsCount: 4,
+      droppedStudentsCount: 0,
+    };
+
+    render(
+      <TurmasDashboard
+        turmas={[sampleActiveTurma, turmaMultipleDropped, turmaNoDropped]}
+        onSelectTurma={vi.fn()}
+        onCreateTurma={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText(/3 ativos · 1 inscrição baixada$/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/5 ativos · 2 inscrições baixadas$/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/4 ativos$/i)).toBeInTheDocument();
+  });
 });

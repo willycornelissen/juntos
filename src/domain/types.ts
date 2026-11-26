@@ -172,3 +172,11 @@ export function validateTurmaMetadata(
     },
   };
 }
+
+/**
+ * Formats the dropped-enrollment count in Portuguese using singular for 1
+ * and plural otherwise (e.g. "1 inscrição baixada", "2 inscrições baixadas").
+ */
+export function formatDroppedStudentsLabel(count: number): string {
+  return `${count} ${count === 1 ? 'inscrição baixada' : 'inscrições baixadas'}`;
+}

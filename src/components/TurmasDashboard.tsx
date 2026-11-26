@@ -7,6 +7,7 @@ import {
   type CreateTurmaInput,
   type ParsedChamada,
   type Turma,
+  formatDroppedStudentsLabel,
   validateTurmaMetadata,
 } from '../domain/types';
 import { sortTurmas } from '../domain/turmaSort';
@@ -443,7 +444,7 @@ export function TurmasDashboard({
                 <span>
                   <strong>Alunos:</strong> {turma.activeStudentsCount} ativos
                   {turma.droppedStudentsCount > 0
-                    ? ` · ${turma.droppedStudentsCount} inscrição baixada`
+                    ? ` · ${formatDroppedStudentsLabel(turma.droppedStudentsCount)}`
                     : ''}
                 </span>
               </div>

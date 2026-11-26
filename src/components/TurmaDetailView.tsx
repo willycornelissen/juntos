@@ -11,6 +11,7 @@ import {
   type Turma,
   type TurmaStatus,
   type UpdateTurmaMetadataInput,
+  formatDroppedStudentsLabel,
   validateCommentText,
   validateTurmaMetadata,
 } from '../domain/types';
@@ -437,7 +438,7 @@ export function TurmaDetailView({
                   <span>
                     <strong>Alunos:</strong> {turma.activeStudentsCount} ativos
                     {' · '}
-                    {turma.droppedStudentsCount} inscrição baixada
+                    {formatDroppedStudentsLabel(turma.droppedStudentsCount)}
                   </span>
                 </div>
               </div>
