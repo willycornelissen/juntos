@@ -11,7 +11,7 @@ import {
 import { computeStudentMetrics } from '../attendanceCalc';
 
 function readFixtureBuffer(): ArrayBuffer {
-  const filePath = path.resolve(process.cwd(), 'Turma Pampulha QUA.xlsx');
+  const filePath = path.resolve(process.cwd(), 'public', 'Turma Pampulha QUA.xlsx');
   const nodeBuf = fs.readFileSync(filePath);
   return nodeBuf.buffer.slice(
     nodeBuf.byteOffset,
@@ -163,6 +163,90 @@ describe('domain/chamadaParser', () => {
     const buf = createWorkbookBuffer(zeroStudentsRows);
     expect(() => parseChamadaBuffer(buf)).toThrow(
       /nenhum aluno encontrado abaixo da linha 6/i
+    );
+  });
+
+  it('includes detailed cell diagnostics and header row hint when Row 6 headers are missing or shifted', () => {
+    const shiftedHeaderRows = [
+      ['Belo Horizonte'],
+      ['Turma X', '', '', '', '', '', 'Filosofia'],
+      ['Tema', '', '', '', '', '', 'Aula 1'],
+      ['Instrutores', '', '', '', '', '', 'Prof'],
+      ['ID', '1', 'Nome', 'Status', '% Trim', '% Ano', '14/10/26'],
+      ['100', '1', 'Maria', 'Ativo', '', '', 'P'],
+    ];
+    const buf = createWorkbookBuffer(shiftedHeaderRows, 'MinhaAba');
+
+    let caught: unknown;
+    try {
+      parseChamadaBuffer(buf);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(ChamadaParseError);
+    const parseErr = caught as ChamadaParseError;
+    expect(parseErr.details).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Aba analisada: "MinhaAba"'),
+        expect.stringContaining('Célula A6: esperado "ID", encontrado "100"'),
+        expect.stringContaining('Célula C6: esperado "Nome", encontrado "Maria"'),
+        expect.stringContaining('encontrado na linha 5'),
+      ])
+    );
+  });
+
+  it('collects cell coordinates for multiple invalid lesson dates and student rows missing names', () => {
+    const mixedIssuesRows = [
+      ['Belo Horizonte'],
+      ['Turma X', '', '', '', '', '', 'Filosofia', 'Filosofia', 'Filosofia'],
+      ['Tema', '', '', '', '', '', 'A1', 'A2', 'A3'],
+      ['Instrutores', '', '', '', '', '', 'Prof', 'Prof', 'Prof'],
+      ['', '', '% Presença'],
+      ['ID', '2', 'Nome', 'Status', '% Trim', '% Ano', '14/10/26', '2026-10-21', '32/13/26'],
+      ['101', '1', '', 'Ativo', '', '', 'P', 'P', 'P'],
+      ['102', '2', '', 'Ativo', '', '', 'P', 'P', 'P'],
+    ];
+    const buf = createWorkbookBuffer(mixedIssuesRows);
+
+    let caught: unknown;
+    try {
+      parseChamadaBuffer(buf);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(ChamadaParseError);
+    const parseErr = caught as ChamadaParseError;
+    expect(parseErr.summary).toMatch(/inconsistências estruturais/i);
+    expect(parseErr.details).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Célula H6:'),
+        expect.stringContaining('Célula I6:'),
+        expect.stringContaining('Linha 7 (célula C7): aluno sem nome (ID na célula A7: "101")'),
+        expect.stringContaining('Linha 8 (célula C8): aluno sem nome (ID na célula A8: "102")'),
+      ])
+    );
+  });
+
+  it('includes line count details when sheet has fewer than 6 rows', () => {
+    const shortRows = [['Belo Horizonte'], ['Turma X']];
+    const buf = createWorkbookBuffer(shortRows, 'chamada');
+
+    let caught: unknown;
+    try {
+      parseChamadaBuffer(buf);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(ChamadaParseError);
+    const parseErr = caught as ChamadaParseError;
+    expect(parseErr.details).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Aba analisada: "chamada"'),
+        expect.stringContaining('Linhas encontradas: 2'),
+      ])
     );
   });
 });

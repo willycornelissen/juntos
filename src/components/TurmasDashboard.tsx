@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ChamadaParseError,
-  parseChamadaBuffer,
-} from '../domain/chamadaParser';
+import { parseChamadaBuffer } from '../domain/chamadaParser';
 import {
   type CreateTurmaInput,
   type ParsedChamada,
@@ -12,6 +9,11 @@ import {
 } from '../domain/types';
 import { sortTurmas } from '../domain/turmaSort';
 import { mapAuthErrorToPtBr } from '../services/authService';
+import {
+  type AlertError,
+  ImportErrorAlert,
+  toAlertError,
+} from './ImportErrorAlert';
 
 export async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
   if (typeof file.arrayBuffer === 'function') {
@@ -157,7 +159,7 @@ export function TurmasDashboard({
     null
   );
   const [fileName, setFileName] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<AlertError | null>(null);
   const [creating, setCreating] = useState(false);
 
   const turmasAtivas = sortTurmas(turmas.filter((t) => t.status === 'Ativa'));
@@ -185,11 +187,9 @@ export function TurmasDashboard({
       }
     } catch (err) {
       setParsedChamada(null);
-      if (err instanceof ChamadaParseError || err instanceof Error) {
-        setFormError(err.message);
-      } else {
-        setFormError('Não foi possível ler a planilha Excel (.xlsx).');
-      }
+      setFormError(
+        toAlertError(err, 'Não foi possível ler a planilha Excel (.xlsx).')
+      );
     }
   };
 
@@ -198,7 +198,9 @@ export function TurmasDashboard({
     setFormError(null);
 
     if (!parsedChamada) {
-      setFormError('Selecione uma planilha de chamada (.xlsx) válida.');
+      setFormError({
+        message: 'Selecione uma planilha de chamada (.xlsx) válida.',
+      });
       return;
     }
 
@@ -215,7 +217,9 @@ export function TurmasDashboard({
     });
 
     if (!validation.valid || !validation.normalized) {
-      setFormError(validation.error ?? 'Preencha todos os campos obrigatórios.');
+      setFormError({
+        message: validation.error ?? 'Preencha todos os campos obrigatórios.',
+      });
       return;
     }
 
@@ -236,9 +240,7 @@ export function TurmasDashboard({
       setFileName('');
       setActiveTab('ativas');
     } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : 'Erro ao criar a turma.'
-      );
+      setFormError(toAlertError(err, 'Erro ao criar a turma.'));
     } finally {
       setCreating(false);
     }
@@ -290,11 +292,7 @@ export function TurmasDashboard({
             e cadastrar os alunos automaticamente.
           </p>
 
-          {formError && (
-            <div className="warning" role="alert">
-              {formError}
-            </div>
-          )}
+          <ImportErrorAlert error={formError} />
 
           <form onSubmit={handleCreateSubmit} noValidate>
             <div className="form-group">

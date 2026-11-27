@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import {
-  ChamadaParseError,
-  parseChamadaBuffer,
-} from '../domain/chamadaParser';
+import { parseChamadaBuffer } from '../domain/chamadaParser';
 import { computeReimportPlan } from '../domain/syncEngine';
 import type { AlunoRecord, ReimportPlan, Turma } from '../domain/types';
+import {
+  type AlertError,
+  ImportErrorAlert,
+  toAlertError,
+} from './ImportErrorAlert';
 import { readFileAsArrayBuffer } from './TurmasDashboard';
 
 export interface ReimportModalProps {
@@ -24,7 +26,7 @@ export function ReimportModal({
 }: ReimportModalProps): React.ReactElement {
   const [fileName, setFileName] = useState('');
   const [plan, setPlan] = useState<ReimportPlan | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<AlertError | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +34,7 @@ export function ReimportModal({
     if (!file) {
       return;
     }
-    setErrorMessage(null);
+    setError(null);
     setFileName(file.name);
 
     try {
@@ -49,11 +51,9 @@ export function ReimportModal({
       setPlan(computedPlan);
     } catch (err) {
       setPlan(null);
-      if (err instanceof ChamadaParseError || err instanceof Error) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage('Não foi possível ler a planilha Excel (.xlsx).');
-      }
+      setError(
+        toAlertError(err, 'Não foi possível ler a planilha Excel (.xlsx).')
+      );
     }
   };
 
@@ -61,16 +61,14 @@ export function ReimportModal({
     if (!plan) {
       return;
     }
-    setErrorMessage(null);
+    setError(null);
     setConfirming(true);
     try {
       await onConfirmReimport(plan);
       onClose();
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao aplicar a reimportação da planilha.'
+      setError(
+        toAlertError(err, 'Erro ao aplicar a reimportação da planilha.')
       );
     } finally {
       setConfirming(false);
@@ -105,11 +103,7 @@ export function ReimportModal({
           datas de aula, novos alunos e identificar inscrições baixadas.
         </p>
 
-        {errorMessage && (
-          <div className="warning" role="alert">
-            {errorMessage}
-          </div>
-        )}
+        <ImportErrorAlert error={error} />
 
         <div className="form-group">
           <label htmlFor="reimport-xlsx-input">

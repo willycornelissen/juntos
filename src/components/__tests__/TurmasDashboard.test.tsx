@@ -4,11 +4,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as XLSX from 'xlsx';
 import { LoginView, TurmasDashboard } from '../TurmasDashboard';
 import type { Turma } from '../../domain/types';
 
 function loadRealXlsxFile(): File {
-  const filePath = path.resolve(process.cwd(), 'Turma Pampulha QUA.xlsx');
+  const filePath = path.resolve(process.cwd(), 'public', 'Turma Pampulha QUA.xlsx');
   const buf = fs.readFileSync(filePath);
   return new File([buf], 'Turma Pampulha QUA.xlsx', {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -374,5 +375,43 @@ describe('components/LoginView & TurmasDashboard', () => {
       screen.getByText(/5 ativos · 2 inscrições baixadas$/i)
     ).toBeInTheDocument();
     expect(screen.getByText(/4 ativos$/i)).toBeInTheDocument();
+  });
+
+  it('displays structured error details in + Nova Turma when uploaded xlsx has invalid structure', async () => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Belo Horizonte'],
+      ['Turma X'],
+      ['Tema'],
+      ['Instrutores'],
+      ['', '', '% Presença'],
+      ['ID', '1', 'Nome', 'Status', '% Trim', '% Ano', 'data-invalida'],
+      ['100', '1', 'Maria', 'Ativo', '', '', 'P'],
+    ]);
+    XLSX.utils.book_append_sheet(wb, ws, 'chamada');
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+    const badDateFile = new File([buf], 'datas-invalidas.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    render(
+      <TurmasDashboard
+        turmas={[]}
+        onSelectTurma={vi.fn()}
+        onCreateTurma={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: /\+ nova turma/i }));
+    fireEvent.change(screen.getByLabelText(/planilha de chamada/i), {
+      target: { files: [badDateFile] },
+    });
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent(/nenhuma data de aula encontrada/i);
+      expect(alert).toHaveTextContent(/Célula G6:/i);
+      expect(alert).toHaveTextContent(/data-invalida/i);
+    });
   });
 });

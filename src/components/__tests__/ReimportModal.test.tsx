@@ -328,4 +328,42 @@ describe('components/ReimportModal', () => {
       screen.getByRole('button', { name: /confirmar sincronização/i })
     ).not.toBeDisabled();
   });
+
+  it('renders structured error details list when spreadsheet has structural inconsistencies', async () => {
+    const onConfirmReimport = vi.fn();
+    render(
+      <ReimportModal
+        turma={existingTurma}
+        alunos={existingAlunos}
+        onClose={vi.fn()}
+        onConfirmReimport={onConfirmReimport}
+      />
+    );
+
+    const badStructureRows = [
+      ['Belo Horizonte'],
+      ['Turma Pampulha (QUA)', '', '', '', '', '', 'Filosofia para viver'],
+      ['Tema', '', '', '', '', '', 'Aula 10'],
+      ['Instrutores', '', '', '', '', '', 'Prof'],
+      ['', '', '% Presença'],
+      ['Matricula', '1', 'Aluno', 'Status', '% Trim', '% Ano', '14/10/26'],
+      ['14820', '1', 'Claudia Marcia Marques', 'Ativo', '', '', 'P'],
+    ];
+
+    fireEvent.change(screen.getByLabelText(/selecionar planilha/i), {
+      target: { files: [buildXlsxFile(badStructureRows)] },
+    });
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent(/cabeçalho obrigatório ausente na linha 6/i);
+      expect(alert).toHaveTextContent(/Célula A6: esperado "ID", encontrado "Matricula"/i);
+      expect(alert).toHaveTextContent(/Célula C6: esperado "Nome", encontrado "Aluno"/i);
+    });
+
+    expect(
+      screen.getByRole('button', { name: /confirmar sincronização/i })
+    ).toBeDisabled();
+    expect(onConfirmReimport).not.toHaveBeenCalled();
+  });
 });
