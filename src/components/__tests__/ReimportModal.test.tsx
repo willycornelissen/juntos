@@ -253,8 +253,8 @@ describe('components/ReimportModal', () => {
     });
   });
 
-  it('displays warning alert and prevents reimport when spreadsheet class name belongs to a different class', async () => {
-    const onConfirmReimport = vi.fn();
+  it('allows reimport when spreadsheet class name in row 2 differs from target class as long as structure is valid', async () => {
+    const onConfirmReimport = vi.fn().mockResolvedValue(undefined);
     render(
       <ReimportModal
         turma={existingTurma}
@@ -264,10 +264,10 @@ describe('components/ReimportModal', () => {
       />
     );
 
-    // Row 2 has 'Turma Savassi (TER)', while existingTurma is 'Turma Pampulha (QUA)'
-    const mismatchedRows = [
+    // Row 2 has 'Nuth LVIII (QUI/PAMP) 20/08/26', while existingTurma is 'Turma Pampulha (QUA)'
+    const differentNameRows = [
       ['Belo Horizonte'],
-      ['Turma Savassi (TER)', '', '', '', '', '', 'Filosofia para viver'],
+      ['Nuth LVIII (QUI/PAMP) 20/08/26', '', '', '', '', '', 'Filosofia para viver'],
       ['Tema', '', '', '', '', '', 'Transpasso Aula 10'],
       ['Instrutores', '', '', '', '', '', 'Willy Garabini Cornelissen'],
       ['', '', '% Presença'],
@@ -276,24 +276,23 @@ describe('components/ReimportModal', () => {
     ];
 
     fireEvent.change(screen.getByLabelText(/selecionar planilha/i), {
-      target: { files: [buildXlsxFile(mismatchedRows)] },
+      target: { files: [buildXlsxFile(differentNameRows)] },
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        /A planilha selecionada pertence à turma "Turma Savassi \(TER\)", que é diferente da turma atual \("Turma Pampulha \(QUA\)"\)\. A importação não pode ser realizada\./i
-      );
+      expect(
+        screen.getByText(/resumo da sincronização/i)
+      ).toBeInTheDocument();
     });
 
-    expect(screen.queryByText(/resumo da sincronização/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /confirmar sincronização/i })
-    ).toBeDisabled();
-    expect(onConfirmReimport).not.toHaveBeenCalled();
+    ).not.toBeDisabled();
   });
 
-  it('displays warning alert and prevents reimport when spreadsheet has no class name on row 2', async () => {
-    const onConfirmReimport = vi.fn();
+  it('allows reimport when spreadsheet has no class name on row 2 as long as structure is valid', async () => {
+    const onConfirmReimport = vi.fn().mockResolvedValue(undefined);
     render(
       <ReimportModal
         turma={existingTurma}
@@ -319,15 +318,14 @@ describe('components/ReimportModal', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        /A planilha selecionada não possui o nome da turma na linha 2\. A importação só é permitida quando o nome coincide com "Turma Pampulha \(QUA\)"\./i
-      );
+      expect(
+        screen.getByText(/resumo da sincronização/i)
+      ).toBeInTheDocument();
     });
 
-    expect(screen.queryByText(/resumo da sincronização/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /confirmar sincronização/i })
-    ).toBeDisabled();
-    expect(onConfirmReimport).not.toHaveBeenCalled();
+    ).not.toBeDisabled();
   });
 });

@@ -451,17 +451,21 @@ describe('domain/syncEngine', () => {
     expect(merged?.comentario).toBe('Aula especial com debate em grupo.');
   });
 
-  it('rejects reimport when spreadsheet class name belongs to a different class', () => {
+  it('allows reimport regardless of spreadsheet class name when structure is valid', () => {
     const turma = makeBaseTurma(); // Turma Pampulha (QUA)
     const parsed: ParsedChamada = {
       cidadePlanilha: 'Belo Horizonte',
-      nomeTurmaPlanilha: 'Turma Savassi (TER)',
+      nomeTurmaPlanilha: 'Nuth LVIII (QUI/PAMP) 20/08/26',
       lessons: turma.lessons,
       students: [],
     };
 
-    expect(() =>
-      computeReimportPlan(turma, [], parsed, '2026-10-15T10:00:00.000Z')
-    ).toThrow(/diferente da turma atual/i);
+    const plan = computeReimportPlan(
+      turma,
+      [],
+      parsed,
+      '2026-10-15T10:00:00.000Z'
+    );
+    expect(plan.updatedLessons).toHaveLength(2);
   });
 });
